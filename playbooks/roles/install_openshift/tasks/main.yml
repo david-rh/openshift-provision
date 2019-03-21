@@ -1,6 +1,7 @@
 ---
 
 - import_tasks: certs.yml
+  when: letsencrypt_cert_generation
 
 - name: Copy Ansible config
   copy:
@@ -24,8 +25,12 @@
 
 - name: Run OpenShift prerequisites
   command: ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
+  async: 900  # 15 minutes
+  poll: 30
   tags: openshift_deploy_cluster
 
 - name: Run OpenShift installer (this will take a while!)
   command: ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
+  async: 5400  # 90 minutes
+  poll: 30
   tags: openshift_deploy_cluster

@@ -27,6 +27,22 @@ cd openshift-provision/
 
 ## Known Issues
 
+### Issue: GlusterFS broken in latest releases of OpenShift 3.11
+
+When installing OpenShift 3.11, the latest dot releases have a bug that
+causes GlusterFS to fail or not install correctly.
+
+The workaround for this is to install the last known good version of
+OpenShift 3.11, which is OpenShift 3.11.43.
+
+In your variable file where you have `openshift_version: "3.11"` set,
+add an additional option:
+
+```yaml
+openshift_version: "3.11"
+openshift_version_minor: "3.11.43"
+```
+
 ### Issue: Docker for Mac does not work
 
 Running this tool using Docker for Mac does not work. During the OpenShift
@@ -63,35 +79,36 @@ Failed to connect to the host via ssh: Shared connection to 18.232.178.150 close
 There are several variables that you will need to define before running the
 AWS provisioner.
 
-| Variable                         | Required           | Default                              | Description                                                                                                                                                                                     |
-| -------------------------------- | ------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cluster_name`                   | :heavy_check_mark: | `openshift`                          | The name of the cluster.<br><br>This value will be in your DNS entries and should conform to valid DNS characters.                                                                              |
-| `openshift_version`              | :heavy_check_mark: |                                      | The OpenShift version to install. This tool currently supports 3.9, 3.10, and 3.11.<br><br>**IMPORTANT:** Make sure this value is quoted, otherwise 3.10 gets read as 3.1 instead of 3.10.             |
-| `openshift_base_domain`          | :heavy_check_mark: |                                      | The base subdomain to use for your cluster.<br><br>Example: If you set this to `example.com`, a DNS entry for `<cluster_name>.example.com` will be created)                                     |
-| `cert_email_address`             | :heavy_check_mark: |                                      | The email address to use when generating Lets Encrypt certs for the cluster.                                                                                                                    |
-| `aws_region`                     | :heavy_check_mark: |                                      | The AWS region (i.e. `us-east-1`)                                                                                                                                                               |
-| `ec2_ami_type`                   | :heavy_check_mark: | `hourly`                             | If you have Cloud Access setup for your account, set this to `cloud_access`. Otherwise, set this to `hourly`.                                                                                   |
-| `route53_hosted_zone_id`         | :heavy_check_mark: |                                      | The ID of the Route53 hosted zone (i.e. `YP563J79RELJ4C`)                                                                                                                                       |
-| `rhsm_username`                  | :heavy_check_mark: |                                      | Your RHSM username                                                                                                                                                                              |
-| `rhsm_password`                  | :heavy_check_mark: |                                      | Your RHSM password                                                                                                                                                                              |
-| `rhsm_pool`                      | :heavy_check_mark: |                                      | The RHSM pool ID that contains OpenShift subscriptions                                                                                                                                          |
-| `redhat_registry_username`       | :heavy_check_mark: |                                      | Your Red Hat registry username. This will default to `rhsm_username` if not specified.<br>To create a registry service account, go to https://access.redhat.com/terms-based-registry/.          |
-| `redhat_registry_password`       | :heavy_check_mark: |                                      | Your Red Hat registry password/token. This will default to `rhsm_password` if not specified.<br>To create a registry service account, go to https://access.redhat.com/terms-based-registry/.    |
-| `openshift_users`                |                    | `[]`                                 | A list of users to create in the OpenShift cluster.<br><br>Each item in the list should include `username`, `password`, and optionally `admin`. See the example vars file below for an example. |
-| `app_node_count`                 |                    | `2`                                  | The number of app nodes to provision                                                                                                                                                            |
-| `ec2_vpc_cidr_block`             |                    | `172.31.0.0/16`                      | The CIDR block for the VPC                                                                                                                                                                      |
-| `ec2_instance_type_bastion`      |                    | `t2.medium`                          | The EC2 instance type for the bastion node                                                                                                                                                      |
-| `ec2_instance_type_master`       |                    | `m4.xlarge`                          | The EC2 instance type for the master node                                                                                                                                                       |
-| `ec2_instance_type_infra`        |                    | `m4.xlarge`                          | The EC2 instance type for the infra node                                                                                                                                                        |
-| `ec2_instance_type_app`          |                    | `m4.large`                           | The EC2 instance type for the app nodes                                                                                                                                                         |
-| `ec2_volume_size_bastion_root`   |                    | `10`                                 | The root disk size (in GB) for the bastion node                                                                                                                                                 |
-| `ec2_volume_size_master_root`    |                    | `60`                                 | The root disk size (in GB) for the master node                                                                                                                                                  |
-| `ec2_volume_size_infra_root`     |                    | `60`                                 | The root disk size (in GB) for the infra node                                                                                                                                                   |
-| `ec2_volume_size_app_root`       |                    | `60`                                 | The root disk size (in GB) for the app nodes                                                                                                                                                    |
-| `ec2_volume_size_cns`            |                    | `100`                                | The disk size (in GB) for the CNS disk                                                                                                                                                          |
-| `cns_block_host_volume_size`     |                    | `50`                                 | The volume size (in GB) of GlusterFS volumes that will be automatically create to host glusterblock volumes                                                                                     |
-| `openshift_registry_volume_size` |                    | `20`                                 | The volume size (in GB) to provision for the integration OpenShift registry                                                                                                                     |
-| `openshift_network_plugin`       |                    | `redhat/openshift-ovs-networkpolicy` | The network plugin to configure. Available options are:<br>`redhat/openshift-ovs-subnet`<br>`redhat/openshift-ovs-multitenant`<br>`redhat/openshift-ovs-networkpolicy`                          |
+| Variable                         | Required           | Default                              | Description                                                                                                                                                                                                                   |
+| -------------------------------- | ------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cluster_name`                   | :heavy_check_mark: | `openshift`                          | The name of the cluster.<br><br>This value will be in your DNS entries and should conform to valid DNS characters.                                                                                                            |
+| `openshift_version`              | :heavy_check_mark: |                                      | The OpenShift version to install. This tool currently supports 3.9, 3.10, and 3.11.<br><br>**IMPORTANT:** Make sure this value is quoted, otherwise 3.10 gets read as 3.1 instead of 3.10.                                    |
+| `openshift_base_domain`          | :heavy_check_mark: |                                      | The base subdomain to use for your cluster.<br><br>Example: If you set this to `example.com`, a DNS entry for `<cluster_name>.example.com` will be created)                                                                   |
+| `cert_email_address`             | :heavy_check_mark: |                                      | The email address to use when generating Lets Encrypt certs for the cluster.                                                                                                                                                  |
+| `aws_region`                     | :heavy_check_mark: |                                      | The AWS region (i.e. `us-east-1`)                                                                                                                                                                                             |
+| `ec2_ami_type`                   | :heavy_check_mark: | `hourly`                             | If you have Cloud Access setup for your account, set this to `cloud_access`. Otherwise, set this to `hourly`.                                                                                                                 |
+| `route53_hosted_zone_id`         | :heavy_check_mark: |                                      | The ID of the Route53 hosted zone (i.e. `YP563J79RELJ4C`)                                                                                                                                                                     |
+| `rhsm_username`                  | :heavy_check_mark: |                                      | Your RHSM username                                                                                                                                                                                                            |
+| `rhsm_password`                  | :heavy_check_mark: |                                      | Your RHSM password                                                                                                                                                                                                            |
+| `rhsm_pool`                      | :heavy_check_mark: |                                      | The RHSM pool ID that contains OpenShift subscriptions                                                                                                                                                                        |
+| `redhat_registry_username`       | :heavy_check_mark: |                                      | Your Red Hat registry username. This will default to `rhsm_username` if not specified.<br>To create a registry service account, go to https://access.redhat.com/terms-based-registry/.                                        |
+| `redhat_registry_password`       | :heavy_check_mark: |                                      | Your Red Hat registry password/token. This will default to `rhsm_password` if not specified.<br>To create a registry service account, go to https://access.redhat.com/terms-based-registry/.                                  |
+| `openshift_users`                |                    | `[]`                                 | A list of users to create in the OpenShift cluster.<br><br>Each item in the list should include `username`, `password`, and optionally `admin`. See the example vars file below for an example.                               |
+| `app_node_count`                 |                    | `2`                                  | The number of app nodes to provision                                                                                                                                                                                          |
+| `ec2_vpc_cidr_block`             |                    | `172.31.0.0/16`                      | The CIDR block for the VPC                                                                                                                                                                                                    |
+| `ec2_instance_type_master`       |                    | `m4.xlarge`                          | The EC2 instance type for the master node                                                                                                                                                                                     |
+| `ec2_instance_type_infra`        |                    | `m4.xlarge`                          | The EC2 instance type for the infra node                                                                                                                                                                                      |
+| `ec2_instance_type_app`          |                    | `m4.large`                           | The EC2 instance type for the app nodes                                                                                                                                                                                       |
+| `ec2_volume_size_master_root`    |                    | `60`                                 | The root disk size (in GB) for the master node                                                                                                                                                                                |
+| `ec2_volume_size_infra_root`     |                    | `60`                                 | The root disk size (in GB) for the infra node                                                                                                                                                                                 |
+| `ec2_volume_size_app_root`       |                    | `60`                                 | The root disk size (in GB) for the app nodes                                                                                                                                                                                  |
+| `ec2_volume_size_cns`            |                    | `150`                                | The disk size (in GB) for the CNS disk                                                                                                                                                                                        |
+| `cns_block_host_volume_size`     |                    | `50`                                 | The volume size (in GB) of GlusterFS volumes that will be automatically create to host glusterblock volumes                                                                                                                   |
+| `openshift_registry_volume_size` |                    | `20`                                 | The volume size (in GB) to provision for the integration OpenShift registry                                                                                                                                                   |
+| `openshift_network_plugin`       |                    | `redhat/openshift-ovs-networkpolicy` | The network plugin to configure. Available options are:<br>`redhat/openshift-ovs-subnet`<br>`redhat/openshift-ovs-multitenant`<br>`redhat/openshift-ovs-networkpolicy`                                                        |
+| `letsencrypt_cert_generation`    |                    | `yes`                                | If you want LetsEncrypt certs generated for the cluster, leave this defaulted to `yes`. Otherwise set to `no`. This feature was originally added to work around hitting LetEncrypt limits and being able to work around them. |
+| `openshift_ssh_password`         |                    |                                      | By default, SSH password auth for the deployed hosts is disabled. If you'd like to enable SSH password auth, set this to the password you'd like to be set for the default user.                                              |
+| `openshift_version_minor`        |                    |                                      | The specific minor version of OpenShift you want to install, otherwise the latest minor release of the `openshift_version` specified will be installed.<br><br>Example: `3.11.43`                                             |
 
 For your convenience, there is an example variables file at
 `<openshift-provision>/vars/aws.example.yml`. Go ahead and make a copy of this
@@ -168,6 +185,13 @@ Now you're ready to provision an OpenShift cluster in AWS.
 sudo ./op.py --env-file vars/aws.env --vars-file vars/aws.yml provision
 ```
 
+If you are looking to use this project to create and setup the infrastructure
+for an OpenShift install, but skip the install, you can run:
+
+```bash
+sudo ./op.py --env-file vars/aws.env --vars-file vars/aws.yml provision --skip-tags openshift_deploy_cluster
+```
+
 Once the provisioning has completed successfully, you will be able to access
 your cluster at `{{ cluster_name }}.{{ openshift_base_domain }}`.
 
@@ -212,6 +236,14 @@ You can start and stop your cluster by:
 sudo ./op.py --env-file vars/aws.env --vars-file vars/aws.yml start
 # Stop cluster
 sudo ./op.py --env-file vars/aws.env --vars-file vars/aws.yml stop
+```
+
+##### SSH
+
+If you need to SSH into the bastion/master, you can do that by:
+
+```bash
+sudo ./op.py --env-file vars/aws.env --vars-file vars/aws.yml ssh
 ```
 
 ##### Create / Update Users
